@@ -1556,8 +1556,8 @@ select option {
 }
 
 .day-node-bubble.status-studied {
-  background: var(--accent2);
-  opacity: 0.75;
+  background: #4ade80;
+  opacity: 0.8;
 }
 
 .day-node:hover .day-node-bubble.status-studied {
@@ -1566,6 +1566,11 @@ select option {
 
 .day-node-bubble.status-miss,
 .day-node-bubble.status-miss-past {
+  background: #f87171;
+  opacity: 0.45;
+}
+
+.day-node-bubble.status-default {
   background: var(--surface2);
   border: 1px solid var(--border);
 }
@@ -1636,13 +1641,13 @@ select option {
 }
 
 .studied-dot {
-  background: var(--accent2);
-  opacity: 0.75;
+  background: #4ade80;
+  opacity: 0.8;
 }
 
 .miss-dot {
-  background: var(--accent3);
-  opacity: 0.35;
+  background: #f87171;
+  opacity: 0.45;
 }
 
 .constancia-hoje-label {
@@ -2289,53 +2294,91 @@ select option {
 
 .sub-acertos-mt {
   margin-top: 6px;
+}
 
-  /* --- NOVOS ESTILOS PARA OS BOTÕES DO CARD DE PLANO --- */
-  .plano-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
+/* --- PLAN CARD LAYOUT & BUTTONS --- */
+.plano-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
 
-  .plano-card-content {
-    flex: 1;
-  }
+.plano-card-content {
+  flex: 1;
+}
 
-  .plano-card-footer {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    margin-top: 16px;
-  }
+.plano-card-footer {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
 
-  .plano-card-actions {
-    display: flex;
-    gap: 6px;
-  }
+.plano-card-actions {
+  display: flex;
+  gap: 8px;
+}
 
-  .plano-action-btn {
-    background: transparent !important;
-    border: none !important;
-    color: var(--muted) !important;
-    cursor: pointer;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    padding: 0;
-    box-shadow: none !important;
-  }
+.plano-action-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
 
-  .plano-action-btn:hover {
-    background: var(--surface2) !important;
-    color: var(--text) !important;
-  }
+.plano-action-btn svg {
+  width: 15px;
+  height: 15px;
+}
 
-  .plano-action-btn.delete-btn:hover {
-    color: var(--accent3) !important;
-    background: rgba(249, 117, 131, 0.1) !important;
-  }
+.plano-action-btn:hover {
+  background: rgba(110, 159, 255, 0.1);
+  border-color: rgba(110, 159, 255, 0.3);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.plano-action-btn.delete-btn:hover {
+  color: var(--accent3);
+  background: rgba(249, 117, 131, 0.1);
+  border-color: rgba(249, 117, 131, 0.3);
+}
+
+/* Plan detail title row edit button */
+.plano-detail-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.plano-btn-edit {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.plano-btn-edit:hover {
+  background: rgba(110, 159, 255, 0.1);
+  border-color: rgba(110, 159, 255, 0.3);
+  color: var(--accent);
 }

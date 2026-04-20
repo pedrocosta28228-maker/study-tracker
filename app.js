@@ -483,7 +483,7 @@ function renderSubjectPerformance() {
 
 // ── CONSTÂNCIA (day bar + streak) ─────────────────────────
 function buildDayPlanMap() {
-  // Build a map of date -> [{ planId, planName, planColor, hours }]
+  // Build a map of date -> [{ planId, planName, hours }]
   const map = {};
   state.entries.forEach(e => {
     if (!map[e.data]) map[e.data] = {};
@@ -493,7 +493,6 @@ function buildDayPlanMap() {
       map[e.data][pid] = {
         planId: e.planId,
         planName: plan ? plan.nome : 'Sem plano',
-        planColor: plan ? (plan.color || '#7d8590') : '#7d8590',
         hours: 0
       };
     }
@@ -508,7 +507,6 @@ function renderConstancia() {
   const dayPlanMap = buildDayPlanMap();
   const todayStr = new Date().toISOString().split('T')[0];
   const todayDate = new Date();
-  const activePlan = getActivePlan();
 
   const DAYS = 30;
 
@@ -519,10 +517,6 @@ function renderConstancia() {
     days.push(d);
   }
 
-  // Determine bubble color
-  const planBubbleColor = activePlan ? (activePlan.color || '#7d8590') : null;
-  const neutralColor = '#6b7280'; // elegant gray for "all plans"
-
   // Render day bar
   const dayBar = $('dayBar');
   dayBar.innerHTML = '';
@@ -531,33 +525,40 @@ function renderConstancia() {
     const ds = d.toISOString().split('T')[0];
     const hours = dayMap[ds] || 0;
     const isToday = ds === todayStr;
-    const studied = hours * 60 >= MIN_MINUTES;
+    const hasSession = hours > 0;
+    const isPast = ds < todayStr;
 
     const dateLabel = String(d.getDate()).padStart(2, '0');
 
     const node = createEl('div', 'day-node');
     const bubble = createEl('div', 'day-node-bubble');
 
-    if (studied) {
-      bubble.classList.add('status-studied');
-      if (isToday) bubble.classList.add('status-today-studied');
-      // Apply plan color or neutral color
-      bubble.style.backgroundColor = planBubbleColor || neutralColor;
-    } else if (isToday) {
-      bubble.classList.add('status-today-empty');
+    if (isToday) {
+      if (hasSession) {
+        bubble.classList.add('status-studied');
+        bubble.classList.add('status-today-studied');
+      } else {
+        bubble.classList.add('status-today-empty');
+      }
+    } else if (isPast) {
+      if (hasSession) {
+        bubble.classList.add('status-studied');
+      } else {
+        bubble.classList.add('status-default');
+      }
     } else {
-      bubble.classList.add('status-miss-past');
+      bubble.classList.add('status-today-empty');
     }
 
     // Build tooltip
-    if (!activePlanId && studied && dayPlanMap[ds]) {
+    if (!activePlanId && hasSession && dayPlanMap[ds]) {
       // All plans mode: show plan breakdown
       const planEntries = Object.values(dayPlanMap[ds]);
       planEntries.sort((a, b) => b.hours - a.hours);
       const tipLines = planEntries.map(p => `${p.planName} — ${formatHorasMinutos(p.hours)}`);
       node.title = ds + '\n' + tipLines.join('\n');
     } else {
-      node.title = studied ? `${ds} — ${hours.toFixed(1)}h ✓` : ds;
+      node.title = hasSession ? `${ds} — ${hours.toFixed(1)}h ✓` : ds;
     }
 
     node.appendChild(bubble);
@@ -966,19 +967,10 @@ function switchView(view) {
 }
 
 // ── PLANOS DE ESTUDO ─────────────────────────────────────
-const PLAN_COLORS = [
-  { name: 'Azul', value: '#93b5fd' },
-  { name: 'Verde', value: '#86dba8' },
-  { name: 'Lilás', value: '#c4b5fd' },
-  { name: 'Pêssego', value: '#fdba9a' },
-  { name: 'Rosa', value: '#f0a6c4' },
-  { name: 'Menta', value: '#8eddd0' },
-];
 
 let planos = [];
 let currentPlanId = null;
 let editPlanId = null;
-let selectedPlanColor = PLAN_COLORS[0].value;
 
 function loadPlanos() {
   try {
@@ -992,23 +984,6 @@ function savePlanos() {
   catch (e) { console.warn('Failed to save planos:', e); }
 }
 
-function renderColorPalette(selectedColor) {
-  const container = $('planColorPalette');
-  container.innerHTML = '';
-  PLAN_COLORS.forEach(c => {
-    const swatch = createEl('button', 'plan-color-swatch');
-    swatch.style.backgroundColor = c.value;
-    swatch.title = c.name;
-    swatch.type = 'button';
-    if (c.value === selectedColor) swatch.classList.add('selected');
-    swatch.addEventListener('click', () => {
-      selectedPlanColor = c.value;
-      container.querySelectorAll('.plan-color-swatch').forEach(s => s.classList.remove('selected'));
-      swatch.classList.add('selected');
-    });
-    container.appendChild(swatch);
-  });
-}
 
 function renderPlanos() {
   const grid = $('planosGrid');
@@ -1027,11 +1002,6 @@ function renderPlanos() {
   planos.forEach(p => {
     const card = createEl('div', 'plano-card');
 
-    if (p.color) {
-      const stripe = createEl('div', 'plano-card-stripe');
-      stripe.style.backgroundColor = p.color;
-      card.appendChild(stripe);
-    }
 
     // Parte de cima (Título e Obs)
     const contentWrap = createEl('div', 'plano-card-content');
@@ -1109,17 +1079,14 @@ function openNovoPlanModal(editId) {
     if (!plan) return;
     $('planNome').value = plan.nome;
     $('planObs').value = plan.obs || '';
-    selectedPlanColor = plan.color || PLAN_COLORS[0].value;
     $('novoPlanModalTitle').textContent = 'Editar Plano';
     $('btnSavePlan').textContent = '✦ Salvar Alterações';
   } else {
     $('planNome').value = '';
     $('planObs').value = '';
-    selectedPlanColor = PLAN_COLORS[0].value;
     $('novoPlanModalTitle').textContent = 'Novo Plano de Estudo';
     $('btnSavePlan').textContent = '✦ Criar Plano';
   }
-  renderColorPalette(selectedPlanColor);
   $('novoPlanModal').classList.add('open');
 }
 
@@ -1137,10 +1104,9 @@ function createPlan() {
     if (plan) {
       plan.nome = nome;
       plan.obs = sanitizeText($('planObs').value);
-      plan.color = selectedPlanColor;
     }
   } else {
-    planos.push({ id: Date.now(), nome, obs: sanitizeText($('planObs').value), disciplinas: [], color: selectedPlanColor });
+    planos.push({ id: Date.now(), nome, obs: sanitizeText($('planObs').value), disciplinas: [] });
   }
   savePlanos();
   closeNovoPlanModal();
@@ -1170,8 +1136,6 @@ function renderPlanDetail() {
 
   $('planoDetailTitle').textContent = plan.nome;
   $('planoDetailObs').textContent = plan.obs || 'Sem observações.';
-  const colorDot = $('planoDetailColorDot');
-  colorDot.style.backgroundColor = plan.color || PLAN_COLORS[0].value;
   const list = $('planoDiscList');
   if (!plan.disciplinas || plan.disciplinas.length === 0) {
     list.innerHTML = '';
