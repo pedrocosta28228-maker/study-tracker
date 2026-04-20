@@ -960,6 +960,11 @@ function switchView(view) {
     $('viewPlanos').style.display = '';
     $('navPlanos').classList.add('active');
     renderPlanos();
+  } else if (view === 'analytics') {
+    $('viewAnalytics').style.display = '';
+    $('navAnalytics').classList.add('active');
+    renderAnalyticsPlanSelector();
+    renderAnalytics();
   } else {
     $('viewTracker').style.display = '';
     $('navTracker').classList.add('active');
@@ -1188,6 +1193,202 @@ function removeDisc(idx) {
   renderPlanDetail();
 }
 
+// ── ANALYTICS ─────────────────────────────────────────────
+const WEEKDAYS_PT = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+function renderAnalyticsPlanSelector() {
+  const sel = $('analyticsActivePlanSelect');
+  sel.innerHTML = '';
+  const allOpt = createEl('option', null, 'Todos os planos');
+  allOpt.value = '';
+  sel.appendChild(allOpt);
+  planos.forEach(p => {
+    const opt = createEl('option', null, p.nome);
+    opt.value = String(p.id);
+    sel.appendChild(opt);
+  });
+  if (activePlanId) sel.value = String(activePlanId);
+}
+
+function onAnalyticsPlanChange() {
+  const val = $('analyticsActivePlanSelect').value;
+  activePlanId = val ? Number(val) : null;
+  saveActivePlan();
+  $('activePlanSelect').value = val;
+  renderMaterias();
+  renderHistory();
+  updateStats();
+  renderAnalytics();
+}
+
+function renderAnalytics() {
+  const filtered = getFilteredEntries();
+  const today = new Date();
+
+  // Last 7 days
+  const days7 = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    days7.push(d);
+  }
+
+  const dayMap = getDayHoursMap(filtered);
+  const weekData = days7.map(d => {
+    const ds = d.toISOString().split('T')[0];
+    return {
+      date: d,
+      dateStr: ds,
+      weekday: WEEKDAYS_PT[d.getDay()],
+      dayNum: String(d.getDate()).padStart(2, '0'),
+      hours: dayMap[ds] || 0
+    };
+  });
+
+  // ── SUMMARY CARDS ──
+  const totalH7 = weekData.reduce((s, d) => s + d.hours, 0);
+  const avgH7 = totalH7 / 7;
+  const bestDay = weekData.reduce((best, d) => d.hours > best.hours ? d : best, weekData[0]);
+
+  const first7 = days7[0].toISOString().split('T')[0];
+  const last7 = days7[6].toISOString().split('T')[0];
+  const subjectHours7 = {};
+  filtered.forEach(e => {
+    if (e.data >= first7 && e.data <= last7) {
+      subjectHours7[e.materia] = (subjectHours7[e.materia] || 0) + e.horas;
+    }
+  });
+  const topSubject = Object.entries(subjectHours7).sort((a, b) => b[1] - a[1])[0];
+
+  const summaryContainer = $('analyticsSummary');
+  summaryContainer.innerHTML = '';
+
+  const avgCard = createEl('div', 'analytics-summary-card');
+  avgCard.appendChild(createEl('div', 'analytics-summary-icon', '⏱'));
+  const avgBody = createEl('div', 'analytics-summary-body');
+  avgBody.appendChild(createEl('div', 'analytics-summary-value', formatHorasMinutos(avgH7)));
+  avgBody.appendChild(createEl('div', 'analytics-summary-label', 'Média por dia'));
+  avgCard.appendChild(avgBody);
+  summaryContainer.appendChild(avgCard);
+
+  const bestCard = createEl('div', 'analytics-summary-card');
+  bestCard.appendChild(createEl('div', 'analytics-summary-icon', '🏆'));
+  const bestBody = createEl('div', 'analytics-summary-body');
+  const bestLabel = bestDay.hours > 0
+    ? `${WEEKDAYS_PT[bestDay.date.getDay()]} ${bestDay.dayNum} — ${formatHorasMinutos(bestDay.hours)}`
+    : 'Nenhum estudo';
+  bestBody.appendChild(createEl('div', 'analytics-summary-value', bestLabel));
+  bestBody.appendChild(createEl('div', 'analytics-summary-label', 'Melhor dia da semana'));
+  bestCard.appendChild(bestBody);
+  summaryContainer.appendChild(bestCard);
+
+  const topCard = createEl('div', 'analytics-summary-card');
+  topCard.appendChild(createEl('div', 'analytics-summary-icon', '📚'));
+  const topBody = createEl('div', 'analytics-summary-body');
+  topBody.appendChild(createEl('div', 'analytics-summary-value', topSubject ? topSubject[0] : 'Nenhuma'));
+  topBody.appendChild(createEl('div', 'analytics-summary-label', topSubject ? `${formatHorasMinutos(topSubject[1])} esta semana` : 'Matéria mais estudada'));
+  topCard.appendChild(topBody);
+  summaryContainer.appendChild(topCard);
+
+  // ── WEEKLY CHART ──
+  const chartContainer = $('analyticsChart');
+  chartContainer.innerHTML = '';
+
+  const maxH = Math.max(...weekData.map(d => d.hours), 0.5);
+
+  weekData.forEach(d => {
+    const col = createEl('div', 'analytics-bar-col');
+
+    const valLabel = createEl('div', 'analytics-bar-value');
+    if (d.hours > 0) valLabel.textContent = formatHorasMinutos(d.hours);
+    col.appendChild(valLabel);
+
+    const barWrap = createEl('div', 'analytics-bar-track');
+    const bar = createEl('div', 'analytics-bar-fill');
+    const pct = Math.max((d.hours / maxH) * 100, d.hours > 0 ? 8 : 0);
+    bar.style.height = pct + '%';
+
+    const isToday = d.dateStr === today.toISOString().split('T')[0];
+    if (d.hours > 0) {
+      bar.classList.add('has-data');
+      if (isToday) bar.classList.add('today');
+    }
+    barWrap.appendChild(bar);
+    col.appendChild(barWrap);
+
+    const dayLabel = createEl('div', 'analytics-bar-day');
+    dayLabel.appendChild(createEl('span', 'analytics-bar-weekday', d.weekday));
+    dayLabel.appendChild(createEl('span', 'analytics-bar-date', d.dayNum));
+    if (isToday) dayLabel.classList.add('today-label');
+    col.appendChild(dayLabel);
+
+    chartContainer.appendChild(col);
+  });
+
+  // ── RANKING ──
+  const rankingContainer = $('analyticsRanking');
+  rankingContainer.innerHTML = '';
+
+  const subjectMap = {};
+  filtered.forEach(e => {
+    if (!subjectMap[e.materia]) subjectMap[e.materia] = { questoes: 0, acertos: 0, erros: 0 };
+    subjectMap[e.materia].questoes += e.questoes;
+    subjectMap[e.materia].acertos += (e.acertos || 0);
+    subjectMap[e.materia].erros += (e.erros || 0);
+  });
+
+  const ranked = Object.entries(subjectMap)
+    .filter(([, v]) => (v.acertos + v.erros) > 0)
+    .map(([name, v]) => ({
+      name,
+      questoes: v.questoes,
+      acertos: v.acertos,
+      erros: v.erros,
+      pct: Math.round(v.acertos / (v.acertos + v.erros) * 100)
+    }))
+    .sort((a, b) => b.pct - a.pct);
+
+  if (ranked.length === 0) {
+    const empty = createEl('div', 'analytics-ranking-empty');
+    empty.appendChild(createEl('div', 'empty-icon', '🎯'));
+    empty.appendChild(createEl('div', 'empty-text', 'Nenhuma questão com gabarito registrada ainda.'));
+    rankingContainer.appendChild(empty);
+    return;
+  }
+
+  const RANK_COLORS = ['#fbbf24', '#94a3b8', '#cd7f32', '#6e9fff', '#7ee8c7', '#f97583', '#c4b5fd', '#86efac'];
+
+  ranked.forEach((item, idx) => {
+    const row = createEl('div', 'analytics-rank-row');
+
+    const badge = createEl('div', 'analytics-rank-badge');
+    badge.textContent = idx + 1;
+    if (idx < 3) badge.classList.add('top-' + (idx + 1));
+    row.appendChild(badge);
+
+    const info = createEl('div', 'analytics-rank-info');
+    info.appendChild(createEl('div', 'analytics-rank-name', item.name));
+    const statsRow = createEl('div', 'analytics-rank-stats');
+    statsRow.appendChild(createEl('span', null, item.questoes + ' questões'));
+    statsRow.appendChild(createEl('span', 'analytics-rank-sep', '·'));
+    statsRow.appendChild(createEl('span', null, `✓${item.acertos} ✕${item.erros}`));
+    info.appendChild(statsRow);
+    row.appendChild(info);
+
+    const accWrap = createEl('div', 'analytics-rank-acc');
+    const accTrack = createEl('div', 'analytics-rank-track');
+    const accFill = createEl('div', 'analytics-rank-fill');
+    accFill.style.width = item.pct + '%';
+    accFill.style.backgroundColor = RANK_COLORS[idx % RANK_COLORS.length];
+    accTrack.appendChild(accFill);
+    accWrap.appendChild(accTrack);
+    accWrap.appendChild(createEl('span', 'analytics-rank-pct', item.pct + '%'));
+    row.appendChild(accWrap);
+
+    rankingContainer.appendChild(row);
+  });
+}
+
 // ── EVENT LISTENERS ───────────────────────────────────────
 function initEventListeners() {
   // Keyboard shortcuts
@@ -1207,6 +1408,10 @@ function initEventListeners() {
   // Sidebar navigation
   $('navTracker').addEventListener('click', () => switchView('tracker'));
   $('navPlanos').addEventListener('click', () => switchView('planos'));
+  $('navAnalytics').addEventListener('click', () => switchView('analytics'));
+
+  // Analytics plan selector
+  $('analyticsActivePlanSelect').addEventListener('change', onAnalyticsPlanChange);
 
   // Drawer
   $('drawerOverlay').addEventListener('click', fecharDrawer);

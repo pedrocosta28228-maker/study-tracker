@@ -24,6 +24,10 @@
       <span class="sidebar-icon">📋</span>
       <span class="sidebar-label">Planos de Estudo</span>
     </button>
+    <button class="sidebar-item" data-view="analytics" id="navAnalytics">
+      <span class="sidebar-icon">📈</span>
+      <span class="sidebar-label">Analytics</span>
+    </button>
   </nav>
 </aside>
 
@@ -214,6 +218,50 @@
   </div>
 </div>
 </div><!-- /viewPlanos -->
+
+<!-- ═══ VIEW: ANALYTICS ═══ -->
+<div class="app-view" id="viewAnalytics" style="display:none">
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-tag">// analytics</span>
+        <h1>Study<span>Analytics</span></h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- PLAN SELECTOR (analytics) -->
+  <div class="plan-selector-bar">
+    <label class="plan-selector-label">Plano ativo:</label>
+    <select id="analyticsActivePlanSelect" class="plan-selector-dropdown"></select>
+  </div>
+
+  <!-- RESUMO DO PERÍODO -->
+  <div class="panel-title analytics-section-title">
+    <span class="panel-title-dot" style="background:var(--accent)"></span>
+    Resumo dos Últimos 7 Dias
+  </div>
+  <div class="analytics-summary" id="analyticsSummary"></div>
+
+  <!-- GRÁFICO SEMANAL -->
+  <div class="panel-title analytics-section-title">
+    <span class="panel-title-dot" style="background:var(--accent2)"></span>
+    Evolução Semanal
+  </div>
+  <div class="analytics-chart-panel" id="analyticsChartPanel">
+    <div class="analytics-chart" id="analyticsChart"></div>
+  </div>
+
+  <!-- RANKING DE MATÉRIAS -->
+  <div class="panel-title analytics-section-title">
+    <span class="panel-title-dot" style="background:var(--accent3)"></span>
+    Ranking por Aproveitamento
+  </div>
+  <div class="analytics-ranking" id="analyticsRanking"></div>
+
+</div>
+</div><!-- /viewAnalytics -->
 
 </div><!-- /app-main -->
 </div><!-- /app-layout -->
