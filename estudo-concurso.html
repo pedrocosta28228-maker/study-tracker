@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Concurso — Tracker de Estudos</title>
+  <meta name="description" content="Ferramenta para registrar e acompanhar seus estudos para concursos públicos.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">📖</div>
+  <nav class="sidebar-nav">
+    <button class="sidebar-item active" data-view="tracker" id="navTracker">
+      <span class="sidebar-icon">📊</span>
+      <span class="sidebar-label">Tracker</span>
+    </button>
+    <button class="sidebar-item" data-view="planos" id="navPlanos">
+      <span class="sidebar-icon">📋</span>
+      <span class="sidebar-label">Planos de Estudo</span>
+    </button>
+  </nav>
+</aside>
+
+<!-- MAIN AREA -->
+<div class="app-main">
+
+<!-- ═══ VIEW: TRACKER ═══ -->
+<div class="app-view" id="viewTracker">
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-tag">// tracker</span>
+        <h1>Estudos <span>Concurso</span></h1>
+      </div>
+      <div class="header-actions">
+        <div class="header-date" id="headerDate"></div>
+        <button class="fab" id="btnAbrirDrawer">
+          <span class="fab-icon">✦</span>
+          Registrar Estudo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- PLAN SELECTOR -->
+  <div class="plan-selector-bar">
+    <label class="plan-selector-label">Plano ativo:</label>
+    <select id="activePlanSelect" class="plan-selector-dropdown">
+      <option value="">Todos os planos</option>
+    </select>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat-card yellow">
+      <div class="stat-label">Total de Horas</div>
+      <div class="stat-value" id="totalHoras">0h</div>
+      <div class="stat-sub" id="mediaHoras">— média/dia</div>
+    </div>
+    <div class="stat-card teal">
+      <div class="stat-label">Total de Questões</div>
+      <div class="stat-value" id="totalQuestoes">0</div>
+      <div class="stat-sub" id="mediaQuestoes">— média/dia</div>
+    </div>
+    <div class="stat-card desempenho">
+      <div class="stat-label">Desempenho</div>
+      <div class="desempenho-row">
+        <div class="desempenho-item">
+          <span class="desempenho-val green-val" id="totalAcertos">0</span>
+          <span class="desempenho-lbl">acertos</span>
+        </div>
+        <div class="desempenho-divider"></div>
+        <div class="desempenho-item">
+          <span class="desempenho-val red-val" id="totalErros">0</span>
+          <span class="desempenho-lbl">erros</span>
+        </div>
+        <div class="desempenho-divider"></div>
+        <div class="desempenho-item">
+          <span class="desempenho-val purple-val" id="totalAprov">—</span>
+          <span class="desempenho-lbl">aproveit.</span>
+        </div>
+      </div>
+      <div class="stat-sub sub-acertos-mt" id="subAcertos">— sem gabarito</div>
+    </div>
+    <div class="stat-card muted-top">
+      <div class="stat-label">Dias Estudados</div>
+      <div class="stat-value" id="totalDias">0</div>
+    </div>
+  </div>
+
+  <!-- CONSTÂNCIA -->
+  <div class="constancia-panel" id="constanciaPanel">
+    <div class="constancia-top">
+      <div class="constancia-left">
+        <div class="panel-title constancia-title">
+          <span class="panel-title-dot constancia-title-dot"></span>
+          CONSTÂNCIA NOS ESTUDOS
+        </div>
+        <div class="constancia-msg" id="constanciaMsg">—</div>
+      </div>
+      <div class="constancia-right">
+        <div class="streak-badge" id="streakBadge">
+          <span class="streak-badge-fire" id="streakBadgeFire" style="display:none">🔥</span>
+          <span class="streak-badge-num" id="streakNumber">0</span>
+          <span class="streak-badge-label">dias seguidos</span>
+        </div>
+        <div class="streak-mini-stats">
+          <span class="streak-mini-item">Recorde: <strong id="streakBest">0</strong></span>
+          <span class="streak-mini-sep">·</span>
+          <span class="streak-mini-item">Válidos: <strong id="streakValid">0</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="day-bar-wrap">
+      <div class="day-bar" id="dayBar"></div>
+    </div>
+
+    <div class="constancia-footer">
+      <span class="constancia-range" id="constanciaRange"></span>
+      <div class="constancia-legend">
+        <span class="legend-dot studied-dot"></span><span>Estudou ≥20min</span>
+        <span class="legend-dot miss-dot"></span><span>Não estudou</span>
+        <span class="constancia-hoje-label">▣ hoje</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESEMPENHO POR DISCIPLINA -->
+  <div class="disc-section" id="discSection" style="display:none">
+    <div class="panel-title disc-title">
+      <span class="panel-title-dot disc-title-dot"></span>
+      Desempenho por Disciplina
+    </div>
+    <div class="disc-grid" id="discGrid"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="main-content">
+    <div class="panel-title history-title">
+      <span class="panel-title-dot history-title-dot"></span>
+      Histórico de Estudos
+    </div>
+    <div class="history-panel" id="historyPanel">
+      <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <div class="empty-text">Nenhuma sessão registrada ainda.<br>Comece agora!</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /viewTracker -->
+
+<!-- ═══ VIEW: PLANOS DE ESTUDO ═══ -->
+<div class="app-view" id="viewPlanos" style="display:none">
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-tag">// planos</span>
+        <h1>Planos <span>de Estudo</span></h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- Plan list -->
+  <div id="planosListView">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+      <div class="panel-title" style="margin-bottom:0">
+        <span class="panel-title-dot" style="background:var(--accent)"></span>
+        Meus Planos
+      </div>
+      <button class="plano-btn-new" id="btnNovoPlan">+ Novo Plano</button>
+    </div>
+    <div id="planosGrid" class="planos-grid">
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <div class="empty-text">Nenhum plano criado ainda.<br>Crie o seu primeiro!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan detail (hidden by default) -->
+  <div id="planoDetailView" style="display:none">
+    <button class="plano-btn-back" id="btnBackPlanos">← Voltar aos Planos</button>
+    <div class="plano-detail-header">
+      <div class="plano-detail-title-row">
+        <span class="plano-detail-color-dot" id="planoDetailColorDot"></span>
+        <h2 class="plano-detail-title" id="planoDetailTitle"></h2>
+        <button class="plano-btn-edit" id="btnEditPlan" title="Editar plano">✎</button>
+      </div>
+      <p class="plano-detail-obs" id="planoDetailObs"></p>
+    </div>
+    <div style="margin-top:24px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div class="panel-title" style="margin-bottom:0">
+          <span class="panel-title-dot" style="background:var(--accent2)"></span>
+          Disciplinas
+        </div>
+        <button class="plano-btn-add-disc" id="btnAddDisc">+ Adicionar Disciplina</button>
+      </div>
+      <div id="planoDiscList" class="plano-disc-list">
+        <div class="empty-state" style="padding:32px">
+          <div class="empty-text">Nenhuma disciplina adicionada.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div><!-- /viewPlanos -->
+
+</div><!-- /app-main -->
+</div><!-- /app-layout -->
+
+<!-- NOVO PLANO MODAL -->
+<div class="focus-confirm" id="novoPlanModal">
+  <div class="focus-confirm-box" style="max-width:460px">
+    <div class="focus-confirm-title" id="novoPlanModalTitle">Novo Plano de Estudo</div>
+    <div class="qs-inner" style="margin-top:16px">
+      <div class="form-group">
+        <label>Nome do Plano</label>
+        <input type="text" id="planNome" placeholder="ex: Concurso INSS 2026">
+      </div>
+      <div class="form-group">
+        <label>Observações (opcional)</label>
+        <textarea id="planObs" placeholder="ex: Focar em Direito e Português" rows="3" style="resize:vertical;width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:10px;font-family:'Inter',sans-serif;font-size:14px;"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Cor do Plano</label>
+        <div class="plan-color-palette" id="planColorPalette"></div>
+      </div>
+    </div>
+    <div class="focus-confirm-btns">
+      <button class="focus-confirm-btn btn-keep" id="btnSavePlan">✦ Criar Plano</button>
+      <button class="focus-confirm-btn btn-minimize" id="btnCancelPlan">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD DISCIPLINA MODAL -->
+<div class="focus-confirm" id="addDiscModal">
+  <div class="focus-confirm-box" style="max-width:400px">
+    <div class="focus-confirm-title">Adicionar Disciplina</div>
+    <div class="qs-inner" style="margin-top:16px">
+      <div class="form-group">
+        <label>Nome da Disciplina</label>
+        <input type="text" id="discNome" placeholder="ex: Direito Constitucional">
+      </div>
+    </div>
+    <div class="focus-confirm-btns">
+      <button class="focus-confirm-btn btn-keep" id="btnSaveDisc">+ Adicionar</button>
+      <button class="focus-confirm-btn btn-minimize" id="btnCancelDisc">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TIMER FAB -->
+<button class="timer-fab" id="timerFab">
+  <span class="timer-fab-icon">⏱</span>
+  Estude agora!
+</button>
+
+<!-- FOCUS OVERLAY -->
+<div class="focus-overlay" id="focusOverlay">
+
+  <!-- Top bar -->
+  <div class="focus-topbar">
+    <div class="focus-tabs">
+      <button class="focus-tab active" id="focusTabSw">⏱ Cronômetro</button>
+      <button class="focus-tab" id="focusTabCd">⏳ Temporizador</button>
+    </div>
+    <button class="focus-minimize-btn" id="focusMinimizeBtn" title="Minimizar — continua rodando">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Minimizar
+    </button>
+    <button class="focus-close-btn" id="focusCloseBtn" title="Fechar">✕</button>
+  </div>
+
+  <!-- Main content -->
+  <div class="focus-body">
+
+    <!-- Motivational quote -->
+    <div class="focus-quote" id="focusQuote">"A disciplina é a ponte entre metas e realizações."</div>
+
+    <!-- CRONÔMETRO PANE -->
+    <div class="focus-pane" id="focusPaneSw">
+      <div class="focus-ring-wrap">
+        <svg class="focus-ring-svg" viewBox="0 0 220 220">
+          <circle class="focus-ring-bg" cx="110" cy="110" r="100"/>
+          <circle class="focus-ring-prog" id="swRing" cx="110" cy="110" r="100"
+            stroke-dasharray="628" stroke-dashoffset="0"/>
+        </svg>
+        <div class="focus-time" id="swDisplay">00:00:00</div>
+      </div>
+      <div class="focus-btns">
+        <button class="focus-btn focus-btn-play" id="swPlayBtn">▶ Iniciar</button>
+        <button class="focus-btn focus-btn-stop" id="swStopBtn" style="display:none">■ Parar</button>
+        <button class="focus-btn focus-btn-reset" id="swResetBtn" title="Resetar">↺</button>
+      </div>
+      <div class="focus-register" id="swRegister">
+        <div class="focus-register-title">✦ Registrar sessão</div>
+        <div class="session-elapsed" id="swElapsed">Tempo cronometrado: 00:00:00</div>
+        <div class="focus-reg-row">
+          <div class="form-group" style="margin-bottom:0"><label>Matéria</label><select id="swMateria"></select></div>
+          <div class="form-group" style="margin-bottom:0"><label>Assunto</label><input type="text" id="swAssunto" placeholder="ex: Interpretação"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Questões</label><input type="number" id="swQuestoes" placeholder="0" min="0"></div>
+          <div class="form-group" style="margin-bottom:0"><label>✅ Acertos</label><input type="number" id="swAcertos" placeholder="0" min="0"></div>
+          <div class="form-group" style="margin-bottom:0"><label>❌ Erros</label><input type="number" id="swErros" placeholder="0" min="0"></div>
+        </div>
+        <button class="btn-reg-session" id="swRegBtn">✦ Salvar no Histórico</button>
+      </div>
+    </div>
+
+    <!-- TEMPORIZADOR PANE -->
+    <div class="focus-pane" id="focusPaneCd" style="display:none">
+      <div class="focus-ring-wrap">
+        <svg class="focus-ring-svg" viewBox="0 0 220 220">
+          <circle class="focus-ring-bg" cx="110" cy="110" r="100"/>
+          <circle class="focus-ring-prog focus-ring-gold" id="cdRing" cx="110" cy="110" r="100"
+            stroke-dasharray="628" stroke-dashoffset="0"/>
+        </svg>
+        <div class="focus-time" id="cdDisplay">00:00:00</div>
+      </div>
+      <div class="countdown-inputs" id="cdInputs" style="justify-content:center">
+        <input type="number" id="cdHours" placeholder="HH" min="0" max="23" value="0">
+        <span class="countdown-sep">:</span>
+        <input type="number" id="cdMinutes" placeholder="MM" min="0" max="59" value="25">
+        <span class="countdown-sep">:</span>
+        <input type="number" id="cdSeconds" placeholder="SS" min="0" max="59" value="0">
+      </div>
+      <div class="focus-btns">
+        <button class="focus-btn focus-btn-gold" id="cdPlayBtn">▶ Iniciar</button>
+        <button class="focus-btn focus-btn-stop" id="cdStopBtn" style="display:none">■ Parar</button>
+        <button class="focus-btn focus-btn-reset" id="cdResetBtn" title="Resetar">↺</button>
+      </div>
+      <div class="focus-register" id="cdRegister">
+        <div class="focus-register-title">✦ Registrar sessão</div>
+        <div class="session-elapsed" id="cdElapsed">Tempo estudado: 00:00:00</div>
+        <div class="focus-reg-row">
+          <div class="form-group" style="margin-bottom:0"><label>Matéria</label><select id="cdMateria"></select></div>
+          <div class="form-group" style="margin-bottom:0"><label>Assunto</label><input type="text" id="cdAssunto" placeholder="ex: Interpretação"></div>
+          <div class="form-group" style="margin-bottom:0"><label>Questões</label><input type="number" id="cdQuestoes" placeholder="0" min="0"></div>
+          <div class="form-group" style="margin-bottom:0"><label>✅ Acertos</label><input type="number" id="cdAcertos" placeholder="0" min="0"></div>
+          <div class="form-group" style="margin-bottom:0"><label>❌ Erros</label><input type="number" id="cdErros" placeholder="0" min="0"></div>
+        </div>
+        <button class="btn-reg-session" id="cdRegBtn">✦ Salvar no Histórico</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOCUS CONFIRM DIALOG -->
+<div class="focus-confirm" id="focusConfirm">
+  <div class="focus-confirm-box">
+    <div class="focus-confirm-icon">⚠️</div>
+    <div class="focus-confirm-title">Parar o estudo?</div>
+    <div class="focus-confirm-msg">O timer ainda está rodando. O que deseja fazer?</div>
+    <div class="focus-confirm-btns">
+      <button class="focus-confirm-btn btn-keep" id="confirmKeepBtn">Continuar estudando</button>
+      <button class="focus-confirm-btn btn-minimize" id="confirmMinimizeBtn">Minimizar (sem parar)</button>
+      <button class="focus-confirm-btn btn-stop-close" id="confirmStopBtn">Parar e fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK SAVE MODAL -->
+<div class="focus-confirm" id="quickSaveModal">
+  <div class="focus-confirm-box" style="max-width:460px">
+    <div class="focus-confirm-icon">✅</div>
+    <div class="focus-confirm-title">Registrar sessão</div>
+    <div class="focus-confirm-msg">Tempo estudado: <strong id="qsTime" style="color:var(--accent2)">00:00:00</strong></div>
+    <div class="qs-inner">
+      <div class="qs-grid" style="grid-template-columns:1fr 1fr">
+        <div class="form-group">
+          <label>Matéria</label>
+          <select id="qsMateria"></select>
+        </div>
+        <div class="form-group">
+          <label>Assunto</label>
+          <input type="text" id="qsAssunto" placeholder="ex: Interpretação">
+        </div>
+      </div>
+      <div class="qs-grid">
+        <div class="form-group">
+          <label>Questões</label>
+          <input type="number" id="qsQuestoes" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>✅ Acertos</label>
+          <input type="number" id="qsAcertos" placeholder="0" min="0">
+        </div>
+        <div class="form-group">
+          <label>❌ Erros</label>
+          <input type="number" id="qsErros" placeholder="0" min="0">
+        </div>
+      </div>
+    </div>
+    <div class="focus-confirm-btns">
+      <button class="focus-confirm-btn btn-keep" id="qsSaveBtn">✦ Salvar no Histórico</button>
+      <button class="focus-confirm-btn btn-minimize" id="qsDiscardBtn">Descartar sessão</button>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawerOverlay"></div>
+
+<!-- DRAWER: REGISTRAR ESTUDO -->
+<div class="form-panel" id="formDrawer">
+  <button class="drawer-close" id="drawerCloseBtn">✕</button>
+
+  <div class="panel-title">
+    <span class="panel-title-dot"></span>
+    Registrar Estudo
+  </div>
+
+  <div class="form-group">
+    <label>Data</label>
+    <input type="date" id="inputData">
+  </div>
+
+  <div class="form-group">
+    <label>Matéria</label>
+    <select id="inputMateria">
+      <option value="">Selecione uma matéria...</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Assunto / Tópico</label>
+    <input type="text" id="inputAssunto" placeholder="ex: Interpretação de Texto (opcional)">
+  </div>
+
+  <hr class="divider">
+
+  <div class="form-group">
+    <label>Tempo Estudado</label>
+    <div class="time-input-row">
+      <div class="time-input-group">
+        <input type="number" id="inputHH" placeholder="0" min="0" max="23" value="0">
+        <span class="time-input-label">h</span>
+      </div>
+      <span class="time-sep">:</span>
+      <div class="time-input-group">
+        <input type="number" id="inputMM" placeholder="0" min="0" max="59" value="0">
+        <span class="time-input-label">min</span>
+      </div>
+      <span class="time-sep">:</span>
+      <div class="time-input-group">
+        <input type="number" id="inputSS" placeholder="0" min="0" max="59" value="0">
+        <span class="time-input-label">seg</span>
+      </div>
+    </div>
+  </div>
+  <div class="input-row">
+    <div class="form-group">
+      <label>Questões Feitas</label>
+      <input type="number" id="inputQuestoes" placeholder="0" min="0">
+    </div>
+  </div>
+
+  <div class="input-row">
+    <div class="form-group">
+      <label>✅ Acertos</label>
+      <input type="number" id="inputAcertos" placeholder="0" min="0">
+    </div>
+    <div class="form-group">
+      <label>❌ Erros</label>
+      <input type="number" id="inputErros" placeholder="0" min="0">
+    </div>
+  </div>
+
+  <button class="btn-submit" id="btnRegistrar">✦ Registrar</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">✓ Estudo registrado!</div>
+
+<script src="app.js"></script>
+</body>
+</html>
